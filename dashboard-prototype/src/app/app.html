@@ -1,0 +1,184 @@
+<main class="page-shell">
+  <header class="topbar">
+    <div class="brand-mark" aria-hidden="true">
+      <div class="brand-mark__inner"></div>
+    </div>
+    <div class="topbar__copy">
+      <h1>Reserve Programs Dashboard</h1>
+      <p>Vizient Reserve Inventory Management</p>
+    </div>
+  </header>
+
+  <section class="metrics-row" aria-label="Reserve summary">
+    <article class="summary-card">
+      <p class="summary-card__label">Total Reserve Units Accessed</p>
+      <h2 class="summary-card__value summary-card__value--purple">1,426</h2>
+      <p class="summary-card__unit">units</p>
+      <p class="summary-card__footnote">Cumulative units accessed from reserve</p>
+    </article>
+
+    <article class="summary-card">
+      <p class="summary-card__label">{{ summaryMetrics()[0].label }}</p>
+      <h2 class="summary-card__value summary-card__value--purple">
+        {{ summaryMetrics()[0].value.replace(' units', '') }}
+      </h2>
+      <p class="summary-card__unit">units</p>
+      <p class="summary-card__footnote">{{ summaryMetrics()[0].detail }}</p>
+    </article>
+
+    <article class="summary-card">
+      <p class="summary-card__label">
+        {{ summaryMetrics()[1].label }} <span class="info-dot">i</span>
+      </p>
+      <h2 class="summary-card__value summary-card__value--green">
+        {{ summaryMetrics()[1].value.replace(' units', '') }}
+      </h2>
+      <p class="summary-card__unit">units</p>
+      <p class="summary-card__footnote">Total units of reserve inventory available for order today</p>
+    </article>
+
+    <article class="summary-card">
+      <p class="summary-card__label">Reserve Member Since</p>
+      <h2 class="summary-card__date">{{ reserveMemberSince }}</h2>
+      <p class="summary-card__footnote">Program enrollment date</p>
+    </article>
+  </section>
+
+  <section class="panel">
+    <div class="panel__controls">
+      <div class="control-group control-group--select">
+        <label>View by</label>
+        <select class="select-input" [value]="currentView()" (change)="setViewFromEvent($event)">
+          @for (view of viewModes; track view) {
+            <option [value]="view">{{ view | titlecase }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="control-group control-group--filter">
+        <label>Filter {{ currentView() | titlecase }}</label>
+        <div class="filter-dropdown">
+          <button type="button" class="select-like" (click)="toggleFilterMenu()">{{ filterLabel() }}</button>
+          @if (filterMenuOpen()) {
+            <div class="filter-menu">
+              <button type="button" class="filter-menu__option" (click)="clearFilters(); closeFilterMenu()">
+                <span>All {{ currentView() | titlecase }}</span>
+                @if (selectedFilters().length === 0) {
+                  <strong>Selected</strong>
+                }
+              </button>
+
+              @for (option of filterOptions(); track option) {
+                <label class="filter-menu__check">
+                  <input
+                    type="checkbox"
+                    [checked]="isFilterSelected(option)"
+                    (change)="toggleFilter(option)"
+                  />
+                  <span>{{ option }}</span>
+                </label>
+              }
+            </div>
+          }
+        </div>
+      </div>
+
+      <div class="control-group control-group--right">
+        <label>Sort by</label>
+        <button type="button" class="select-like">Days of use (lowest first)</button>
+      </div>
+    </div>
+
+    <div class="panel__body">
+      <section class="table-section">
+        <div class="toolbar">
+          <button type="button" class="toolbar__button" (click)="expandAllRows()">Expand All</button>
+          <button type="button" class="toolbar__button toolbar__button--muted" (click)="collapseAllRows()">
+            Collapse All
+          </button>
+        </div>
+
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>{{ currentView() | titlecase }}</th>
+                <th>Total Reserve Inventory</th>
+                <th>Units Accessed</th>
+                <th>Available Today</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of breakdownRows(); track trackByName($index, row)) {
+                <tr class="group-row" [class.group-row--expanded]="isExpanded(row.name)">
+                  <td>
+                    <button type="button" class="row-toggle" (click)="toggleRow(row.name)">
+                      <span class="row-toggle__chevron" [class.row-toggle__chevron--open]="isExpanded(row.name)">
+                        ›
+                      </span>
+                    </button>
+                    <div class="row-title">
+                      <strong>{{ row.name }}</strong>
+                      <span
+                        >{{ row.facilities }} facilities · {{ row.suppliers }} suppliers · {{ row.products }}
+                        products</span
+                      >
+                    </div>
+                  </td>
+                  <td>
+                    <div class="metric-stack">
+                      <span>Total Reserve Inventory</span>
+                      <strong>{{ formatUnits(row.totalUnits) }}</strong>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="metric-stack">
+                      <span>Units Accessed</span>
+                      <strong>{{ formatUnits(row.totalUnits - row.availableToday) }}</strong>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="metric-stack metric-stack--green">
+                      <span>Available Today</span>
+                      <strong>{{ formatUnits(row.availableToday) }}</strong>
+                    </div>
+                  </td>
+                </tr>
+                @if (isExpanded(row.name)) {
+                  <tr class="detail-row">
+                    <td colspan="4">
+                      <div class="detail-panel">
+                        <div class="detail-panel__header">
+                          <span>Product</span>
+                          <span>Category</span>
+                          <span>Supplier</span>
+                          <span>Facility</span>
+                          <span>Available Today</span>
+                        </div>
+                        @for (detail of row.details; track trackByDetail($index, detail)) {
+                          <div class="detail-panel__item">
+                            <div>
+                              <strong>{{ detail.productName }}</strong>
+                            </div>
+                            <span>{{ detail.category }}</span>
+                            <span>{{ detail.supplier }}</span>
+                            <span>{{ detail.facility }}</span>
+                            <div class="detail-panel__available">
+                              <strong>{{ formatUnits(detail.availableToday) }}</strong>
+                              <span>Resets {{ formatShortDate(detail.resetDate) }}</span>
+                              <span>{{ detail.daysRemaining }} days of use</span>
+                            </div>
+                          </div>
+                        }
+                      </div>
+                    </td>
+                  </tr>
+                }
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </section>
+</main>

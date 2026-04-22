@@ -1,0 +1,10 @@
+{
+  "name": "dashboard-prototype-workspace",
+  "private": true,
+  "scripts": {
+    "start": "npm --prefix dashboard-prototype run start",
+    "build": "npm --prefix dashboard-prototype run build",
+    "test": "npm --prefix dashboard-prototype run test",
+    "watch": "npm --prefix dashboard-prototype run watch"
+  }
+}
